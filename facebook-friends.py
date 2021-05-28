@@ -1,5 +1,5 @@
 # --------------- Import -----------------
-import os, datetime, time, csv
+import os, datetime, time, csv, pprint
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
@@ -8,7 +8,7 @@ import configparser
 from sys import argv
 import random
 # ---------------  -----------------
-print("\n" * 10)
+print("\n" * 50)
 os.environ["DEBUSSY"] = "1"
 # --------------- Configure browser session -----------------
 wd_options = Options()
@@ -48,17 +48,8 @@ def scroll_to_bottom():
 def scan_friends():
     print('Scanning page for friends...')
     friends = []
-    # friend_cards = browser.find_elements_by_xpath("//div[@data-sigil='undoable-action']/a")
     friend_cards = browser.find_elements_by_css_selector("div#root div.timeline div[data-sigil='undoable-action'] a")
     for friend in friend_cards:
-        # if friend.get_attribute('data-hovercard') is None:
-        #   print(" %s (INACTIVE)" % friend.text)
-        #   friend_id = friend.get_attribute('ajaxify').split('id=')[1]
-        #   friend_active = 0
-        # else:
-        #   print(" %s" % friend.text)
-        #   friend_id = friend.get_attribute('data-hovercard').split('id=')[1].split('&')[0]
-        #   friend_active = 1
         friend_name = friend.text
         friend_id = friend.get_attribute('href')
         if friend_name:
@@ -87,12 +78,7 @@ def scrape_1st_degrees():
     writer = csv.writer(open(csvOut, 'w', encoding="utf-8"))
     writer.writerow(['id','name'])
 
-    #Get your unique Facebook ID
-    # profile_icon = browser.find_element_by_css_selector("[data-click='profile_icon'] > a > span > img")
-    # myid = profile_icon.get_attribute("id")[19:]
-    # profile_icon = browser.find_element_by_css_selector("[id='profile_tab_jewel'] > a")
-    # myid = profile_icon.get_attribute("href")
-    # myid = 0
+    #Get my Facebook id
     time.sleep(1)
     browser.get("https://m.facebook.com/home.php")
     time.sleep(1)
@@ -113,13 +99,15 @@ def scrape_1st_degrees():
         writer.writerow([friend['id'],str(friend['name'])])
 
     print("Successfully saved to %s" % csvOut)
+
+    return csvOut
 # --------------- Scrape 2nd degree friends. ---------------
 #This can take several days if you have a lot of friends!!
 def scrape_2nd_degrees():
     #Prep CSV Output File
     csvOut = '2nd-degree_%s.csv' % now.strftime("%Y-%m-%d_%H%M")
     writer = csv.writer(open(csvOut, 'w', encoding="utf-8"))
-    writer.writerow(['A_id', 'B_id', 'A_name','B_name','active'])
+    writer.writerow(['A_id', 'B_id', 'A_name','B_name'])
 
     #Load friends from CSV Input File
     script, filename = argv
@@ -128,7 +116,7 @@ def scrape_2nd_degrees():
     print("------------------------------------------")
     for idx,friend in enumerate(myfriends):
         #Load URL of friend's friend page
-        scrape_url = "https://www.facebook.com/"+ friend['uid'] + "/friends?source_ref=pb_friends_tl"
+        scrape_url = "https://m.facebook.com/"+ friend['uid'] + "/friends?source_ref=pb_friends_tl"
         browser.get(scrape_url)
 
         #Scan your friends' Friends page (2nd-degree friends)
@@ -139,10 +127,34 @@ def scrape_2nd_degrees():
         #Write friends to CSV File
         print('Writing friends to CSV...')
         for person in their_friends:
-            writer.writerow([friend['uid'],person['id'],friend['name'],person['name'],person['active']])
+            writer.writerow([friend['uid'],person['id'],friend['name'],person['name']])
+
+        print("friend #%d done" % (idx+1))
+
+    print("Successfully saved to %s" % csvOut)
 # --------------- Check Disconnected Friends ---------------
 def who_unfriended_me():
-    
+    #get old frineds and scrape current friends
+    #then compare between them
+    script, filename, action = argv
+    old_friends = load_csv(filename)
+    current_friends = load_csv(scrape_1st_degrees())
+    disconnections = [x for x in old_friends if x not in current_friends]
+
+    print("\n" * 10)
+    print("=== Who Unfriended Me? ===\n\n")
+    pp = pprint.PrettyPrinter(indent=4)
+    pp.pprint(disconnections)
+    print("\n" * 10)
+
+    #save to file
+    csvOut = '1st-degree-disconnections_%s.csv' % now.strftime("%Y-%m-%d_%H%M")
+    writer = csv.writer(open(csvOut, 'w', encoding="utf-8"))
+    writer.writerow(['name','id'])
+    for friend in disconnections:
+        writer.writerow([friend['uid'],friend['name']])
+
+    print("Successfully saved to %s" % csvOut)
 # --------------- Start Scraping ---------------
 now = datetime.now()
 configPath = "config.txt"
@@ -153,12 +165,14 @@ if configPath:
     password = configObj.get('credentials', 'password')
 else:
     print('Enter the config path')
-# fb_login(configObj)
+fb_login(configObj)
 
-if len(argv) is 1:
-    # scrape_1st_degrees()
-    print(load_csv("1st-degree_2021-05-26_1554.csv"))
-elif len(argv) is 2:
+if len(argv) == 1:
+    scrape_1st_degrees()
+elif len(argv) == 2:
     scrape_2nd_degrees()
+elif len(argv) == 3:
+    script, filename, action = argv
+    if action == "un": who_unfriended_me()
 else:
     print("Invalid # of arguments specified. Use none to scrape your 1st degree connections, or specify the name of the CSV file as the first argument.")

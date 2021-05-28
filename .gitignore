@@ -1,6 +1,6 @@
 *.csv
 *.log
 *.json
+*.bat
 config.txt
 chromedriver.exe
-run.bat
