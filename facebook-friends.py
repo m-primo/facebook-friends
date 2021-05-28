@@ -150,7 +150,7 @@ def who_unfriended_me():
     #save to file
     csvOut = '1st-degree-disconnections_%s.csv' % now.strftime("%Y-%m-%d_%H%M")
     writer = csv.writer(open(csvOut, 'w', encoding="utf-8"))
-    writer.writerow(['name','id'])
+    writer.writerow(['id','name'])
     for friend in disconnections:
         writer.writerow([friend['uid'],friend['name']])
 
