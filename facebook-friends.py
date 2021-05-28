@@ -70,21 +70,15 @@ def scan_friends():
     return friends
 # ----------------- Load list from CSV -----------------
 def load_csv(filename):
-    inact = 0
     myfriends = []
     with open(filename, 'rt', encoding="utf-8") as input_csv:
         reader = csv.DictReader(input_csv)
         for idx,row in enumerate(reader):
-            if row['active'] is '1':
-                myfriends.append({
-                    "name":row['B_name'],
-                    "uid":row['B_id']
-                })
-            else:
-                print("Skipping %s (inactive)" % row['B_name'])
-                inact = inact + 1
+            myfriends.append({
+                "name":row['name'],
+                "uid":row['id']
+            })
     print("%d friends in imported list" % (idx+1))
-    print("%d ready for scanning (%d inactive)" % (idx-inact+1, inact))
     return myfriends
 # --------------- Scrape 1st degree friends ---------------
 def scrape_1st_degrees():
@@ -146,6 +140,9 @@ def scrape_2nd_degrees():
         print('Writing friends to CSV...')
         for person in their_friends:
             writer.writerow([friend['uid'],person['id'],friend['name'],person['name'],person['active']])
+# --------------- Check Disconnected Friends ---------------
+def who_unfriended_me():
+    
 # --------------- Start Scraping ---------------
 now = datetime.now()
 configPath = "config.txt"
@@ -156,10 +153,11 @@ if configPath:
     password = configObj.get('credentials', 'password')
 else:
     print('Enter the config path')
-fb_login(configObj)
+# fb_login(configObj)
 
 if len(argv) is 1:
-    scrape_1st_degrees()
+    # scrape_1st_degrees()
+    print(load_csv("1st-degree_2021-05-26_1554.csv"))
 elif len(argv) is 2:
     scrape_2nd_degrees()
 else:

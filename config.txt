@@ -1,3 +1,0 @@
-[credentials]
-email=xxxxx
-password=xxxxx
