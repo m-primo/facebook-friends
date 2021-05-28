@@ -1,0 +1,3 @@
+[credentials]
+email=your_email@email.com
+password=yourpassword

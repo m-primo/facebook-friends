@@ -1,5 +1,6 @@
 *.csv
 *.log
 *.json
-/venv
-/.vscode
+config.txt
+chromedriver.exe
+run.bat
