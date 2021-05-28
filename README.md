@@ -41,3 +41,8 @@ password=yourpassword
 4. A browser window will open.
 5. You should see the script looping through your Facebook friend's friend pages.
 6. A CSV file will be created with the data (2nd-degree_YYYY-MM-DD_HHMM.csv).
+
+### Disconnections (who unfriended you)
+1. Run ```python facebook-friends.py 1st-degree_YYYY-MM-DD_HHMM.csv un```, with the actual CSV filename.
+2. It will do the same as "1st degree connections" to get your current friends.
+3. You should see who unfriended you, and also it will be saved in CSV file (1st-degree-disconnections_YYYY-MM-DD_HHMM.csv).
