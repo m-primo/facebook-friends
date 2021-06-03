@@ -1,1 +1,2 @@
-selenium
+selenium==3.141.0
+unicode==2.8
