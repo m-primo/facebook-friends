@@ -1,5 +1,5 @@
 # ---------------> Import <-----------------
-import os, datetime, time, csv, pprint
+import os, datetime, time, csv
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
@@ -60,7 +60,7 @@ def scan_friends():
 # -----------------> Load list from CSV <-----------------
 def load_csv(filename):
     myfriends = []
-    with open(filename, 'rt', encoding="utf-8") as input_csv:
+    with open(filename, 'rt', newline='', encoding="utf-8") as input_csv:
         reader = csv.DictReader(input_csv)
         for idx,row in enumerate(reader):
             myfriends.append({
@@ -76,7 +76,7 @@ def scrape_1st_degrees():
 
     #Prep CSV Output File
     csvOut = 'data/1st-degree_%s.csv' % now.strftime("%Y-%m-%d_%H%M")
-    writer = csv.writer(open(csvOut, 'w', newline='', encoding="utf-8"))
+    writer = csv.writer(open(csvOut, 'wt', newline='', encoding="utf-8"))
     writer.writerow(['id', 'name', 'mutuals'])
 
     #Get my Facebook id
@@ -113,7 +113,7 @@ def scrape_2nd_degrees():
 
     #Prep CSV Output File
     csvOut = 'data/2nd-degree_%s.csv' % now.strftime("%Y-%m-%d_%H%M")
-    writer = csv.writer(open(csvOut, 'w', encoding="utf-8"))
+    writer = csv.writer(open(csvOut, 'wt', newline='', encoding="utf-8"))
     writer.writerow(['A_id', 'A_name', 'A_mutuals', 'B_id', 'B_name', 'B_mutuals'])
 
     #Load friends from CSV Input File
@@ -147,24 +147,32 @@ def scrape_2nd_degrees():
 def who_unfriended_me():
     start_time = time.time()
     #get old frineds and scrape current friends
-    #then compare between them    
+    #then compare between them
     script, filename, action = argv
     old_friends = load_csv(filename)
     current_friends = load_csv(scrape_1st_degrees())
-    disconnections = [x for x in old_friends if x not in current_friends]
+    # disconnections = [friend for friend in old_friends if friend not in current_friends]
 
-    print("\n" * 10)
-    print("=== Who Unfriended Me? ===\n\n")
-    pp = pprint.PrettyPrinter(indent=4)
-    pp.pprint(disconnections)
-    print("\n" * 10)
+    # remove mutuals column to diff.
+    t_current_friends = current_friends
+    t_old_friends = old_friends
+    for friend in t_current_friends:
+        del friend['mutuals']
+    for friend in t_old_friends:
+        del friend['mutuals']
+
+    # diff
+    disconnections = []
+    for friend in t_current_friends:
+        if friend not in t_old_friends:
+            disconnections.append(friend)
 
     #save to file
     csvOut = 'data/1st-degree-disconnections_%s.csv' % now.strftime("%Y-%m-%d_%H%M")
-    writer = csv.writer(open(csvOut, 'w', encoding="utf-8"))
-    writer.writerow(['id', 'name', 'mutuals'])
+    writer = csv.writer(open(csvOut, 'wt', newline='', encoding="utf-8"))
+    writer.writerow(['id', 'name'])
     for friend in disconnections:
-        writer.writerow([friend['id'], friend['name'], friend['mutuals']])
+        writer.writerow([friend['id'], friend['name']])
 
     print("[+] Successfully saved to %s" % csvOut)
     end_time = time.time() - start_time
