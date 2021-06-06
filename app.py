@@ -72,6 +72,8 @@ def load_csv(filename):
     return myfriends
 # ---------------> Scrape 1st degree friends <---------------
 def scrape_1st_degrees():
+    start_time = time.time()
+
     #Prep CSV Output File
     csvOut = 'data/1st-degree_%s.csv' % now.strftime("%Y-%m-%d_%H%M")
     writer = csv.writer(open(csvOut, 'w', newline='', encoding="utf-8"))
@@ -100,11 +102,15 @@ def scrape_1st_degrees():
         writer.writerow([friend['id'],str(friend['name']).encode('utf-8').decode('utf-8'),friend['mutuals']])
 
     print("[+] Successfully saved to %s" % csvOut)
+    end_time = time.time() - start_time
+    print("[>] Scrapping took",str(end_time),"s")
 
     return csvOut
 # ---------------> Scrape 2nd degree friends <---------------
 #This can take several days if you have a lot of friends!!
 def scrape_2nd_degrees():
+    start_time = time.time()
+
     #Prep CSV Output File
     csvOut = 'data/2nd-degree_%s.csv' % now.strftime("%Y-%m-%d_%H%M")
     writer = csv.writer(open(csvOut, 'w', encoding="utf-8"))
@@ -133,10 +139,15 @@ def scrape_2nd_degrees():
         print("[+] Friend #%d done" % (idx+1))
 
     print("[+] Successfully saved to %s" % csvOut)
+    end_time = time.time() - start_time
+    print("[>] Scrapping took",str(end_time),"s")
+
+    return csvOut
 # --------------- Check Disconnected Friends ---------------
 def who_unfriended_me():
+    start_time = time.time()
     #get old frineds and scrape current friends
-    #then compare between them
+    #then compare between them    
     script, filename, action = argv
     old_friends = load_csv(filename)
     current_friends = load_csv(scrape_1st_degrees())
@@ -156,6 +167,8 @@ def who_unfriended_me():
         writer.writerow([friend['id'], friend['name'], friend['mutuals']])
 
     print("[+] Successfully saved to %s" % csvOut)
+    end_time = time.time() - start_time
+    print("[>] Who Unfriended Me took",str(end_time),"s")
 # ---------------> Vars [2] <---------------
 now = datetime.now()
 configPath = "config.txt"
@@ -178,6 +191,7 @@ def help():
     print("")
 
 def main():
+    full_start_time = time.time()
     print("")
     login_from_config()
     if len(argv) == 1:
@@ -191,6 +205,8 @@ def main():
         print("Invalid number of arguments.")
         help()
     print("")
+    full_end_time = time.time() - full_start_time
+    print("[>] Application took",str(full_end_time),"s")
 
 if __name__ == '__main__':
     main()
