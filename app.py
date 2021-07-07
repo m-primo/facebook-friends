@@ -10,11 +10,13 @@ import random
 # ---------------> Env <-----------------
 os.environ["DEBUSSY"] = "1"
 # ---------------> Configure browser session <-----------------
-wd_options = Options()
-wd_options.add_argument("--disable-notifications")
-wd_options.add_argument("--disable-infobars")
-wd_options.add_argument("--mute-audio")
-browser = webdriver.Chrome(options=wd_options)
+def create_browser():
+    wd_options = Options()
+    wd_options.add_argument("--disable-notifications")
+    wd_options.add_argument("--disable-infobars")
+    wd_options.add_argument("--mute-audio")
+    browser = webdriver.Chrome(options=wd_options)
+    return browser
 # ---------------> Ask user to log in <-----------------
 def fb_login(credentials):
     email = credentials.get('credentials', 'email')
@@ -177,6 +179,40 @@ def who_unfriended_me():
     print("[+] Successfully saved to %s" % csvOut)
     end_time = time.time() - start_time
     print("[>] Who Unfriended Me took",str(end_time),"s")
+# --------------- 2 Lists Difference ---------------
+def friend_list_diff():
+    start_time = time.time()
+    #get old frineds and scrape current friends
+    #then compare between them
+    script, filename1, filename2, action = argv
+    old_friends = load_csv(filename1)
+    current_friends = load_csv(filename2)
+    # disconnections = [friend for friend in old_friends if friend not in current_friends]
+
+    # remove mutuals column to diff.
+    t_current_friends = current_friends
+    t_old_friends = old_friends
+    for friend in t_current_friends:
+        del friend['mutuals']
+    for friend in t_old_friends:
+        del friend['mutuals']
+
+    # diff
+    disconnections = []
+    for friend in t_current_friends:
+        if friend not in t_old_friends:
+            disconnections.append(friend)
+
+    #save to file
+    csvOut = 'data/1st-degree-diff_%s.csv' % now.strftime("%Y-%m-%d_%H%M")
+    writer = csv.writer(open(csvOut, 'wt', newline='', encoding="utf-8"))
+    writer.writerow(['id', 'name'])
+    for friend in disconnections:
+        writer.writerow([friend['id'], friend['name']])
+
+    print("[+] Successfully saved to %s" % csvOut)
+    end_time = time.time() - start_time
+    print("[>] 2 Friend List Difference took",str(end_time),"s")
 # ---------------> Vars [2] <---------------
 now = datetime.now()
 configPath = "config.txt"
@@ -196,12 +232,17 @@ def help():
     print("Use no arguments to scrape your '1st degree connections'.")
     print("Specify the name of the CSV file as the first argument to scrape your '2nd degree connections'.")
     print("Or specify the name of the CSV file as the first argument and 'un' as the second argument to check 'who unfriended you'.")
+    print("Or specify the name of the CSV file as the first argument, the name of the second CSV file as the second argument, and 'df' as the third argument to differentiate between 2 lists.")
     print("")
+
+if len(argv) >= 1 and len(argv) <= 3:
+    browser = create_browser()
 
 def main():
     full_start_time = time.time()
     print("")
-    login_from_config()
+    if len(argv) >= 1 and len(argv) <= 3:
+        login_from_config()
     if len(argv) == 1:
         scrape_1st_degrees()
     elif len(argv) == 2:
@@ -209,6 +250,9 @@ def main():
     elif len(argv) == 3:
         script, filename, action = argv
         if action == "un": who_unfriended_me()
+    elif len(argv) == 4:
+        script, filename1, filename2, action = argv
+        if action == "df": friend_list_diff()
     else:
         print("Invalid number of arguments.")
         help()
